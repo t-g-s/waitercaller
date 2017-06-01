@@ -1,5 +1,8 @@
 from flask import Flask
+from flask import redirect
 from flask import render_template
+from flask import request
+from flask import url_for
 
 # ExtDeprecationWarning: Importing flask.ext.login is deprecated, use flask_login instead.
 #from flask.ext.login import LoginManager
@@ -8,15 +11,13 @@ from flask_login import LoginManager
 from flask_login import login_required
 from flask_login import login_user
 from flask_login import logout_user
-
-from mockdbhelper import MockDBHelper as DBHelper
-from user import User
-
-from flask import redirect
-from flask import url_for
-from flask import request
+from flask_login import current_user
 
 from passwordhelper import PasswordHelper
+from user import User
+
+import config
+from mockdbhelper import MockDBHelper as DBHelper
 
 DB = DBHelper()
 PH = PasswordHelper()
@@ -29,10 +30,32 @@ login_manager = LoginManager(app)
 def home():
     return render_template("home.html")
 
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return render_template("dashboard.html")
+
 @app.route("/account")
 @login_required
 def account():
-    return "You are logged in."
+    tables = DB.get_tables(current_user.get_id())
+    return render_template("account.html", tables=tables)
+
+@app.route("/account/createtable", methods=["POST"])
+@login_required
+def account_createtable():
+    tablename = request.form.get("tablenumber")
+    tableid = DB.add_table(tablename, current_user.get_id())
+    new_url = config.base_url + "newrequest/" + tableid
+    DB.update_table(tableid, new_url)
+    return redirect(url_for("account"))
+
+@app.route("/account/deletetable")
+@login_required
+def account_deletetable():
+    tableid = request.args.get("tableid")
+    DB.delete_table(tableid)
+    return redirect(url_for("account"))
 
 @app.route("/login", methods=["POST"])
 def login():

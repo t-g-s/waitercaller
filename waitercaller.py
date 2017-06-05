@@ -22,6 +22,8 @@ from mockdbhelper import MockDBHelper as DBHelper
 from bitlyhelper import BitlyHelper
 import datetime
 
+from forms import RegistrationForm
+
 DB = DBHelper()
 PH = PasswordHelper()
 BH = BitlyHelper()
@@ -32,7 +34,8 @@ login_manager = LoginManager(app)
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    registrationform = RegistrationForm()
+    return render_template("home.html", registrationform=registrationform)
 
 @app.route("/dashboard")
 @login_required
